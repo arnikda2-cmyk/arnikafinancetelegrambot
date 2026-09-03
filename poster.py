@@ -1,63 +1,45 @@
-
-from PIL import Image, ImageDraw, ImageFont
 from pathlib import Path
-import math
+from PIL import Image, ImageDraw, ImageFont
 
-ROOT = Path(__file__).resolve().parent.parent
-OUT = ROOT / "poster_test.png"
+ROOT = Path(__file__).resolve().parent
+OUTPUT = ROOT / "poster_test.png"
 
-# قالب آزمایشی؛ در مرحله بعد همین ساختار با فایل‌های اصلی ۱۲ کادر نهایی جایگزین می‌شود.
-W, H = 1080, 1920
-img = Image.new("RGB", (W, H), "#111318")
-draw = ImageDraw.Draw(img)
-
-def font(size):
+def _font(size, bold=False):
     candidates = [
-        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
-        "/usr/share/fonts/truetype/noto/NotoSansArabic-Regular.ttf",
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf" if bold else "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+        "/usr/share/fonts/truetype/liberation2/LiberationSans-Bold.ttf" if bold else "/usr/share/fonts/truetype/liberation2/LiberationSans-Regular.ttf",
     ]
     for p in candidates:
-        if Path(p).exists():
-            return ImageFont.truetype(p, size)
+        if Path(p).exists(): return ImageFont.truetype(p, size)
     return ImageFont.load_default()
 
-title = font(52)
-head = font(34)
-body = font(28)
-small = font(22)
-
-# 12 fixed cards: 3 columns x 4 rows
-margin = 36
-gap = 18
-cw = (W - 2*margin - 2*gap) // 3
-ch = (H - 2*margin - 3*gap) // 4
-
-cards = [
-    ("01", "آرنیکا فایننس", "تحلیل گرم طلای ۱۸ عیار"),
-    ("02", "وضعیت فعلی", "قیمت: 22.9 میلیون تومن"),
-    ("03", "روند", "کوتاه‌مدت: صعودی\nمیان‌مدت: صعودی"),
-    ("04", "حمایت", "22.2\n21.8\n21.1"),
-    ("05", "مقاومت", "22.95–23.0"),
-    ("06", "محتمل‌ترین سناریو", "حفظ 22.2 و تلاش برای شکست 23"),
-    ("07", "هدف کوتاه‌مدت", "23.5 → 24"),
-    ("08", "اونس جهانی", "حدود 4,368 دلار"),
-    ("09", "سناریوی مخالف", "زیر 22.2 → 21.8"),
-    ("10", "هدف میان‌مدت", "25 → 26 میلیون تومن"),
-    ("11", "دنبال گن", "P → 9 → 17 → 26 → 33\nریست با P جدید"),
-    ("12", "جمع‌بندی", "ساختار صعودی؛ 23 گره اصلی"),
-]
-
-for i, (num, h, b) in enumerate(cards):
-    r, c = divmod(i, 3)
-    x = margin + c*(cw+gap)
-    y = margin + r*(ch+gap)
-    draw.rounded_rectangle((x, y, x+cw, y+ch), radius=24, outline="#D6B15E", width=3)
-    draw.text((x+22, y+18), num, font=small, fill="#D6B15E")
-    draw.text((x+22, y+58), h, font=head, fill="white")
-    yy = y + 120
-    for line in b.split("\n"):
-        draw.text((x+22, yy), line, font=body, fill="#E7E7E7")
-        yy += 48
-
-img.save(OUT, quality=95)
-return_path = OUT
+def make_demo_poster():
+    W, H = 1200, 1600
+    img = Image.new("RGB", (W, H), (12, 18, 28))
+    draw = ImageDraw.Draw(img)
+    title, sub, body, small = _font(70, True), _font(42, True), _font(34), _font(28)
+    draw.text((W//2, 90), "ARNIKA FINANCE", font=title, fill=(225,184,76), anchor="ma")
+    draw.text((W//2, 185), "تحلیل طلای ۱۸ عیار", font=sub, fill=(245,245,245), anchor="ma")
+    cards = [
+        ("وضعیت فعلی", "قیمت نمونه: ۲۲.۹ میلیون تومن"),
+        ("روند کوتاه‌مدت", "صعودی"),
+        ("روند میان‌مدت", "صعودی"),
+        ("حمایت‌ها", "۲۲.۲  |  ۲۱.۸"),
+        ("مقاومت‌ها", "۲۳.۰  |  ۲۳.۵"),
+        ("محتمل‌ترین سناریو", "تثبیت بالای ۲۲.۲ و تلاش برای عبور از ۲۳"),
+        ("اهداف صعودی", "۲۳.۵  |  ۲۴.۰"),
+        ("اونس جهانی", "$4,368 / oz"),
+        ("سناریوی مخالف", "از دست رفتن ۲۲.۲ → ۲۱.۸"),
+        ("هشدار", "در سقف‌های روزانه، ریسک نوسان بیشتر است"),
+        ("جمع‌بندی", "روند غالب صعودی؛ شکست مقاومت، تأیید ادامه مسیر"),
+    ]
+    y = 300
+    for heading, text in cards:
+        draw.rounded_rectangle((80,y,W-80,y+105), radius=22, outline=(120,120,120), width=2, fill=(22,29,42))
+        draw.text((W-110,y+18), heading, font=body, fill=(225,184,76), anchor="ra")
+        draw.text((W-110,y+65), text, font=small, fill=(245,245,245), anchor="ra")
+        y += 127
+        if y > H-120: break
+    draw.text((W//2,H-55), "نسخه آزمایشی — بدون توصیه قطعی خرید/فروش", font=small, fill=(170,170,170), anchor="ms")
+    img.save(OUTPUT)
+    return str(OUTPUT)
